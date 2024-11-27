@@ -1,0 +1,32 @@
+#!/bin/bash
+
+# 定义日志文件所在目录
+log_dir="/mnt/sata1-1/xiaomi_camera_videos/7811dc9b59f1/xiaomi-video-merge-log/"
+
+# 检查日志目录是否存在，如果不存在则给出提示
+if [! -d "$log_dir" ]; then
+    echo "提示：日志文件目录不存在，请检查。"
+fi
+
+# 执行docker run命令，并将标准输出和标准错误输出重定向到日志目录下（假设Docker会在该目录创建日志文件）
+docker run --rm \
+    -v /mnt/sata1-1/xiaomi_camera_videos/7811dc9b59f1:/app/video \
+    -e "DELETE_SUCCESS=true" \
+    hslr/xiaomi-camera-merge:latest \
+    > "${log_dir}docker_output.log" 2>&1
+
+# 获取日志目录下所有以.log结尾的文件，并按照创建时间降序排序，取最新的文件（即第一个文件）
+latest_log=$(ls -t "$log_dir"/*.log 2>/dev/null | head -n 1)
+
+# 检查是否找到了最新的日志文件，如果没找到则给出提示
+if [ -z "$latest_log" ]; then
+    echo "提示：未找到日志文件，请检查。"
+fi
+
+# 读取最新日志文件内容并输出，方便1Panel捕获展示在UI界面
+if [ -n "$latest_log" ]; then
+    cat "$latest_log"
+fi
+
+# 输出一个提示信息，表明任务执行完毕，也可方便在1Panel中查看执行状态
+echo "【小米摄像头视频合并任务执行完毕】"
